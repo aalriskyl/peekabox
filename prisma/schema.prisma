@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+enum SessionStatus {
+  ACTIVE
+  USED
+  EXPIRED
+}
+
+model SessionCode {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  status      SessionStatus @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  usedAt      DateTime?
+  expiredAt   DateTime?
+  session     Session?
+}
+
+model Photo {
+  id          String   @id @default(cuid())
+  url         String
+  order       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId   String
+
+  @@index([sessionId])
+}
+
+model Session {
+  id            String      @id @default(cuid())
+  code          String      @unique
+  status        SessionStatus @default(ACTIVE)
+  photos        Photo[]
+  sessionCode   SessionCode? @relation(fields: [sessionCodeId], references: [id])
+  sessionCodeId String?     @unique
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt @default(now())
+  usedAt        DateTime?
+
+
+  @@index([createdAt])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Frame {
+  id        String   @id @default(cuid())
+  filename  String   @unique
+  url       String
+  width     Int
+  height    Int
+  size      Int
+  mimeType  String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
